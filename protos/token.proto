@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package token;
+
+option go_package = "protobuf/token";
+
+message Plan {
+  string id = 1;
+  string name = 2;
+  int32 maxDeviceLogin = 3;
+  int32 maxDeviceStream = 4;
+  int32 expiredAt = 5;
+  int32 contentIds = 6;
+  int32 isForceMaxDeviceLogin = 7;
+  int32 platforms = 8;
+  string kplusId = 9;
+  string deviceId = 10; 
+  int32 isAutoRenew = 11;
+}
+
+message AccessToken {
+  int32 iat = 1;
+  int32 exp = 2;
+  int32 isAuthenticated = 3;
+  string uid = 4;
+  string username = 5;
+  string deviceId = 6;
+  string deviceName = 7;
+  int32 versionCode = 8;
+  repeated int32 platform = 9;
+  string deviceInfo = 10;
+  string userAgent = 11;
+  int32 dtId = 12;
+  string spId = 13;
+  string authType = 14;
+  repeated Plan plans = 15;
+  string clientId = 16;
+  int32 hasPackage = 17;
+  int32 isPaid = 18;
+  string ip = 19;
+  int32 isFromVN = 20;
+  string city = 21;
+  int32 zone = 22;
+  string isp = 23;
+  repeated string userCollections = 24;
+  string jti = 25;
+  string osVersion = 26;
+  string appVersion = 27;
+  string displayName = 28;
+}
+
+message RefreshToken {
+  string jti = 1; 
+  string did = 2; 
+  string uid = 3; 
+  int32 iat = 4;
+  int32 exp = 5;
+}
