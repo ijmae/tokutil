@@ -23,7 +23,7 @@ func Encode(decoded protoreflect.ProtoMessage) (string, error) {
 		return "", err
 	}
 
-	return b64.URLEncoding.EncodeToString([]byte(out)), nil
+	return b64.RawURLEncoding.EncodeToString([]byte(out)), nil
 }
 
 func EncodeAT(decoded *tokenpb.AccessToken) string {
@@ -47,7 +47,7 @@ func EncodeRT(decoded *tokenpb.RefreshToken) string {
 }
 
 func Decode(encodedBase64URL string, data protoreflect.ProtoMessage) error {
-	decodedBase64URL, errDecodeBase64 := b64.URLEncoding.DecodeString(encodedBase64URL)
+	decodedBase64URL, errDecodeBase64 := b64.RawURLEncoding.DecodeString(encodedBase64URL)
 
 	if errDecodeBase64 != nil {
 		return errDecodeBase64
@@ -131,7 +131,11 @@ func DoHMAC(input, secret, outType string) string {
 	b := h.Sum(nil)
 
 	if outType == "base64" {
-		return b64.URLEncoding.EncodeToString(b)
+		return b64.RawStdEncoding.EncodeToString(b)
+	}
+
+	if outType == "base64URL" {
+		return b64.RawURLEncoding.EncodeToString(b)
 	}
 
 	return hex.EncodeToString(b)
@@ -142,7 +146,7 @@ func SignAT(payload tokenpb.AccessToken, secret string) string {
 
 	encodedAT := EncodeAT(&payload)
 
-	signedAT := DoHMAC(encodedAT, secret, "base64")
+	signedAT := DoHMAC(encodedAT, secret, "base64URL")
 
 	var s strings.Builder
 
@@ -157,7 +161,7 @@ func SignRT(payload tokenpb.RefreshToken, secret string) string {
 
 	encodedAT := EncodeRT(&payload)
 
-	signedAT := DoHMAC(encodedAT, secret, "base64")
+	signedAT := DoHMAC(encodedAT, secret, "base64URL")
 
 	var s strings.Builder
 
@@ -176,7 +180,7 @@ func VerifyAT(token, secret string) (tokenpb.AccessToken, error) {
 
 	signed := tokenArr[1]
 
-	signedVerify := DoHMAC(payload, secret, "base64")
+	signedVerify := DoHMAC(payload, secret, "base64URL")
 
 	if signedVerify != signed {
 		return tokenpb.AccessToken{}, errors.New("invalid token")
@@ -200,7 +204,7 @@ func VerifyRT(token, secret string) (tokenpb.RefreshToken, error) {
 
 	signed := tokenArr[1]
 
-	signedVerify := DoHMAC(payload, secret, "base64")
+	signedVerify := DoHMAC(payload, secret, "base64URL")
 
 	if signedVerify != signed {
 		return tokenpb.RefreshToken{}, errors.New("invalid token")
