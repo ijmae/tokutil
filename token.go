@@ -16,7 +16,7 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-func Encode(decoded protoreflect.ProtoMessage) (string, error) {
+func encode(decoded protoreflect.ProtoMessage) (string, error) {
 	out, err := proto.Marshal(decoded)
 
 	if err != nil {
@@ -27,7 +27,7 @@ func Encode(decoded protoreflect.ProtoMessage) (string, error) {
 }
 
 func EncodeAT(decoded *tokenpb.AccessToken) string {
-	out, err := Encode(decoded)
+	out, err := encode(decoded)
 
 	if err != nil {
 		log.Fatalln("Failed to encode access token:", err)
@@ -37,7 +37,7 @@ func EncodeAT(decoded *tokenpb.AccessToken) string {
 }
 
 func EncodeRT(decoded *tokenpb.RefreshToken) string {
-	out, err := Encode(decoded)
+	out, err := encode(decoded)
 
 	if err != nil {
 		log.Fatalln("Failed to encode refresh token:", err)
@@ -46,7 +46,7 @@ func EncodeRT(decoded *tokenpb.RefreshToken) string {
 	return out
 }
 
-func Decode(encodedBase64URL string, data protoreflect.ProtoMessage) error {
+func decode(encodedBase64URL string, data protoreflect.ProtoMessage) error {
 	decodedBase64URL, errDecodeBase64 := b64.RawURLEncoding.DecodeString(encodedBase64URL)
 
 	if errDecodeBase64 != nil {
@@ -65,7 +65,7 @@ func Decode(encodedBase64URL string, data protoreflect.ProtoMessage) error {
 func DecodeAT(encodedBase64URL string) (tokenpb.AccessToken, error) {
 	var at tokenpb.AccessToken
 
-	if err := Decode(encodedBase64URL, &at); err != nil {
+	if err := decode(encodedBase64URL, &at); err != nil {
 		log.Fatalln("Failed to decode access token - Decode base64:", err)
 		return at, err
 	}
@@ -76,7 +76,7 @@ func DecodeAT(encodedBase64URL string) (tokenpb.AccessToken, error) {
 func DecodeRT(encodedBase64URL string) (tokenpb.RefreshToken, error) {
 	var rt tokenpb.RefreshToken
 
-	if err := Decode(encodedBase64URL, &rt); err != nil {
+	if err := decode(encodedBase64URL, &rt); err != nil {
 		log.Fatalln("Failed to decode refresh token - Decode base64:", err)
 		return rt, err
 	}
@@ -87,7 +87,7 @@ func DecodeRT(encodedBase64URL string) (tokenpb.RefreshToken, error) {
 func DecodeATToJSON(encodedBase64URL string) (string, error) {
 	var at tokenpb.AccessToken
 
-	if err := Decode(encodedBase64URL, &at); err != nil {
+	if err := decode(encodedBase64URL, &at); err != nil {
 		log.Fatalln("Failed to decode access token - Decode base64:", err)
 		return "", err
 	}
@@ -105,7 +105,7 @@ func DecodeATToJSON(encodedBase64URL string) (string, error) {
 func DecodeRToJSON(encodedBase64URL string) (string, error) {
 	var rt tokenpb.RefreshToken
 
-	if err := Decode(encodedBase64URL, &rt); err != nil {
+	if err := decode(encodedBase64URL, &rt); err != nil {
 		log.Fatalln("Failed to decode refresh token - Decode base64:", err)
 		return "", err
 	}
@@ -120,7 +120,7 @@ func DecodeRToJSON(encodedBase64URL string) (string, error) {
 	return string(json), nil
 }
 
-func DoHMAC(input, secret, outType string) string {
+func doHMAC(input, secret, outType string) string {
 	// Create a new HMAC by defining the hash type and the key (as byte array)
 	h := hmac.New(sha256.New, []byte(secret))
 
@@ -146,7 +146,7 @@ func SignAT(payload tokenpb.AccessToken, secret string) string {
 
 	encodedAT := EncodeAT(&payload)
 
-	signedAT := DoHMAC(encodedAT, secret, "base64URL")
+	signedAT := doHMAC(encodedAT, secret, "base64URL")
 
 	var s strings.Builder
 
@@ -161,7 +161,7 @@ func SignRT(payload tokenpb.RefreshToken, secret string) string {
 
 	encodedAT := EncodeRT(&payload)
 
-	signedAT := DoHMAC(encodedAT, secret, "base64URL")
+	signedAT := doHMAC(encodedAT, secret, "base64URL")
 
 	var s strings.Builder
 
@@ -180,7 +180,7 @@ func VerifyAT(token, secret string) (tokenpb.AccessToken, error) {
 
 	signed := tokenArr[1]
 
-	signedVerify := DoHMAC(payload, secret, "base64URL")
+	signedVerify := doHMAC(payload, secret, "base64URL")
 
 	if signedVerify != signed {
 		return tokenpb.AccessToken{}, errors.New("invalid token")
@@ -204,7 +204,7 @@ func VerifyRT(token, secret string) (tokenpb.RefreshToken, error) {
 
 	signed := tokenArr[1]
 
-	signedVerify := DoHMAC(payload, secret, "base64URL")
+	signedVerify := doHMAC(payload, secret, "base64URL")
 
 	if signedVerify != signed {
 		return tokenpb.RefreshToken{}, errors.New("invalid token")
