@@ -1,4 +1,4 @@
-package tokenutil
+package tokutil
 
 import (
 	"crypto/hmac"
@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"log"
-	tokenpb "sia/tokenutility/protobuf/tokenpb"
+	tokenpb "github.com/ijmae/tokutil/protobuf/tokenpb"
 	"strings"
 )
 

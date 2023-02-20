@@ -1,8 +1,8 @@
-package tokenutil
+package tokutil
 
 import (
+	"github.com/ijmae/tokutil/protobuf/tokenpb"
 	"google.golang.org/protobuf/proto"
-	"sia/tokenutility/protobuf/tokenpb"
 	"testing"
 )
 

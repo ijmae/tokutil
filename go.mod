@@ -1,4 +1,4 @@
-module sia/tokenutility
+module github.com/ijmae/tokutil
 
 go 1.20
 
