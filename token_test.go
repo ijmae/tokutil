@@ -76,7 +76,11 @@ func TestEncodeAT(t *testing.T) {
 }
 
 func TestDecodeAT(t *testing.T) {
-	decoded, _ := DecodeAT(mockEncoded)
+	decoded, err := DecodeAT(mockEncoded)
+
+	if err != nil {
+		t.Fatalf("decoded fail: %v", err)
+	}
 
 	if !proto.Equal(&decoded, &mockAT) {
 		t.Fatalf("decoded fail")
@@ -92,7 +96,11 @@ func TestSignAT(t *testing.T) {
 }
 
 func TestVerifyAT(t *testing.T) {
-	signed, _ := VerifyAT(mockSign, secret)
+	signed, err := VerifyAT(mockSign, secret)
+
+	if err != nil {
+		t.Fatalf("verify fail: %v", err)
+	}
 
 	if !proto.Equal(&signed, &mockAT) {
 		t.Fatalf("verify fail")

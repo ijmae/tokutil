@@ -195,7 +195,7 @@ func VerifyAT(token, secret string) (tokenpb.AccessToken, error) {
 		return tokenpb.AccessToken{}, errDecode
 	}
 
-	if int64(at.Iat) < time.Now().Unix() {
+	if int64(at.Exp) < time.Now().Unix() {
 		return tokenpb.AccessToken{}, errors.New("expired token")
 	}
 
@@ -223,7 +223,7 @@ func VerifyRT(token, secret string) (tokenpb.RefreshToken, error) {
 		return tokenpb.RefreshToken{}, errDecode
 	}
 
-	if int64(rt.Iat) < time.Now().Unix() {
+	if int64(rt.Exp) < time.Now().Unix() {
 		return tokenpb.RefreshToken{}, errors.New("expired token")
 	}
 
