@@ -6,12 +6,14 @@ import (
 	b64 "encoding/base64"
 	"encoding/hex"
 	"errors"
+	"log"
+	"strings"
+	"time"
+
+	tokenpb "github.com/ijmae/tokutil/protobuf/tokenpb"
 	jsoniter "github.com/json-iterator/go"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"log"
-	tokenpb "github.com/ijmae/tokutil/protobuf/tokenpb"
-	"strings"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -193,6 +195,10 @@ func VerifyAT(token, secret string) (tokenpb.AccessToken, error) {
 		return tokenpb.AccessToken{}, errDecode
 	}
 
+	if int64(at.Iat) < time.Now().Unix() {
+		return tokenpb.AccessToken{}, errors.New("expired token")
+	}
+
 	return at, nil
 }
 
@@ -215,6 +221,10 @@ func VerifyRT(token, secret string) (tokenpb.RefreshToken, error) {
 	if errDecode != nil {
 		log.Fatalln("Failed to decode refresh token - Decode proto:", errDecode)
 		return tokenpb.RefreshToken{}, errDecode
+	}
+
+	if int64(rt.Iat) < time.Now().Unix() {
+		return tokenpb.RefreshToken{}, errors.New("expired token")
 	}
 
 	return rt, nil
