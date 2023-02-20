@@ -2,7 +2,7 @@ package tokenutil
 
 import (
 	"google.golang.org/protobuf/proto"
-	"tdm/tokenutility/protobuf/tokenpb"
+	"sia/tokenutility/protobuf/tokenpb"
 	"testing"
 )
 

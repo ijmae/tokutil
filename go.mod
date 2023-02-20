@@ -1,3 +1,3 @@
-module tdm/tokenutility
+module sia/tokenutility
 
 go 1.20
