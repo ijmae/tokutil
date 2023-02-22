@@ -68,7 +68,11 @@ var mockEncoded = "CNOTsp8GENP8wZ8GGAEiCk1XQzVBUlJGNTkqCjA5NDU3ODkzMDUyGDExMTEtM
 var mockSign = "CNOTsp8GENP8wZ8GGAEiCk1XQzVBUlJGNTkqCjA5NDU3ODkzMDUyGDExMTEtMjIyMi0zMzMzLTQ0NDQtNTU1NToHU2Ftc3VuZ0CK9tAJSANg5wdqATFyBXBob25lei0KATESBHRlc3QYASABKIetSzIBMTIBMjIBM0IDAQIDSgdrcGx1c2lkUgNhYmN6LQoBMhIEdGVzdBgBIAEoh61LMgExMgEyMgEzQgMBAgNKB2twbHVzaWRSA2FiY4IBDDAwMDAwMDAwMjQ3N4gBAZABAZoBDzExMy4xOTAuMjMzLjE3OKABAaoBFVZpZXQgTmFtX0hhIE5vaV9IYW5vabABAboBC3ZucHQuY29tLnZuygEPMTY3NjQ0NjE2MzQ1NTg04gEKMDk0KioqKjMwNQ.-mZlSY-MYo1llO0u2TurS2u8IxCKXyND8y0bLsqShns"
 
 func TestEncodeAT(t *testing.T) {
-	encoded := EncodeAT(&mockAT)
+	encoded, err := EncodeAT(&mockAT)
+
+	if err != nil {
+		t.Fatalf("encode fail: %v", err)
+	}
 
 	if encoded != mockEncoded {
 		t.Fatalf("encode fail")
@@ -88,7 +92,11 @@ func TestDecodeAT(t *testing.T) {
 }
 
 func TestSignAT(t *testing.T) {
-	signed := SignAT(mockAT, secret)
+	signed, err := SignAT(mockAT, secret)
+
+	if err != nil {
+		t.Fatalf("sign fail: %v", err)
+	}
 
 	if signed != mockSign {
 		t.Fatalf("sign fail")

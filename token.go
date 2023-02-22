@@ -6,7 +6,6 @@ import (
 	b64 "encoding/base64"
 	"encoding/hex"
 	"errors"
-	"log"
 	"strings"
 	"time"
 
@@ -28,24 +27,24 @@ func encode(decoded protoreflect.ProtoMessage) (string, error) {
 	return b64.RawURLEncoding.EncodeToString([]byte(out)), nil
 }
 
-func EncodeAT(decoded *tokenpb.AccessToken) string {
+func EncodeAT(decoded *tokenpb.AccessToken) (string, error) {
 	out, err := encode(decoded)
 
 	if err != nil {
-		log.Fatalln("Failed to encode access token:", err)
+		return "", err
 	}
 
-	return out
+	return out, nil
 }
 
-func EncodeRT(decoded *tokenpb.RefreshToken) string {
+func EncodeRT(decoded *tokenpb.RefreshToken) (string, error) {
 	out, err := encode(decoded)
 
 	if err != nil {
-		log.Fatalln("Failed to encode refresh token:", err)
+		return "", err
 	}
 
-	return out
+	return out, nil
 }
 
 func decode(encodedBase64URL string, data protoreflect.ProtoMessage) error {
@@ -68,7 +67,6 @@ func DecodeAT(encodedBase64URL string) (tokenpb.AccessToken, error) {
 	var at tokenpb.AccessToken
 
 	if err := decode(encodedBase64URL, &at); err != nil {
-		log.Fatalln("Failed to decode access token - Decode base64:", err)
 		return at, err
 	}
 
@@ -79,7 +77,6 @@ func DecodeRT(encodedBase64URL string) (tokenpb.RefreshToken, error) {
 	var rt tokenpb.RefreshToken
 
 	if err := decode(encodedBase64URL, &rt); err != nil {
-		log.Fatalln("Failed to decode refresh token - Decode base64:", err)
 		return rt, err
 	}
 
@@ -90,14 +87,12 @@ func DecodeATToJSON(encodedBase64URL string) (string, error) {
 	var at tokenpb.AccessToken
 
 	if err := decode(encodedBase64URL, &at); err != nil {
-		log.Fatalln("Failed to decode access token - Decode base64:", err)
 		return "", err
 	}
 
 	json, errToJSON := json.Marshal(at)
 
 	if errToJSON != nil {
-		log.Fatalln("Failed to decode access token - To JSON:", errToJSON)
 		return "", errToJSON
 	}
 
@@ -108,47 +103,57 @@ func DecodeRToJSON(encodedBase64URL string) (string, error) {
 	var rt tokenpb.RefreshToken
 
 	if err := decode(encodedBase64URL, &rt); err != nil {
-		log.Fatalln("Failed to decode refresh token - Decode base64:", err)
 		return "", err
 	}
 
 	json, errToJSON := json.Marshal(rt)
 
 	if errToJSON != nil {
-		log.Fatalln("Failed to decode refresh token - To JSON:", errToJSON)
 		return "", errToJSON
 	}
 
 	return string(json), nil
 }
 
-func doHMAC(input, secret, outType string) string {
+func doHMAC(input, secret, outType string) (string, error) {
 	// Create a new HMAC by defining the hash type and the key (as byte array)
 	h := hmac.New(sha256.New, []byte(secret))
 
 	// Write Data to it
-	h.Write([]byte(input))
+	_, err := h.Write([]byte(input))
+
+	if err != nil {
+		return "", err
+	}
 
 	// Convert to []byte
 	b := h.Sum(nil)
 
 	if outType == "base64" {
-		return b64.RawStdEncoding.EncodeToString(b)
+		return b64.RawStdEncoding.EncodeToString(b), nil
 	}
 
 	if outType == "base64URL" {
-		return b64.RawURLEncoding.EncodeToString(b)
+		return b64.RawURLEncoding.EncodeToString(b), nil
 	}
 
-	return hex.EncodeToString(b)
+	return hex.EncodeToString(b), nil
 
 }
 
-func SignAT(payload tokenpb.AccessToken, secret string) string {
+func SignAT(payload tokenpb.AccessToken, secret string) (string, error) {
 
-	encodedAT := EncodeAT(&payload)
+	encodedAT, err := EncodeAT(&payload)
 
-	signedAT := doHMAC(encodedAT, secret, "base64URL")
+	if err != nil {
+		return "", err
+	}
+
+	signedAT, err := doHMAC(encodedAT, secret, "base64URL")
+
+	if err != nil {
+		return "", err
+	}
 
 	var s strings.Builder
 
@@ -156,14 +161,22 @@ func SignAT(payload tokenpb.AccessToken, secret string) string {
 	s.WriteString(".")
 	s.WriteString(signedAT)
 
-	return s.String()
+	return s.String(), nil
 }
 
-func SignRT(payload tokenpb.RefreshToken, secret string) string {
+func SignRT(payload tokenpb.RefreshToken, secret string) (string, error) {
 
-	encodedAT := EncodeRT(&payload)
+	encodedAT, err := EncodeRT(&payload)
 
-	signedAT := doHMAC(encodedAT, secret, "base64URL")
+	if err != nil {
+		return "", err
+	}
+
+	signedAT, err := doHMAC(encodedAT, secret, "base64URL")
+
+	if err != nil {
+		return "", err
+	}
 
 	var s strings.Builder
 
@@ -171,18 +184,28 @@ func SignRT(payload tokenpb.RefreshToken, secret string) string {
 	s.WriteString(".")
 	s.WriteString(signedAT)
 
-	return s.String()
+	return s.String(), nil
 }
 
 func VerifyAT(token, secret string) (tokenpb.AccessToken, error) {
 
+	var at tokenpb.AccessToken
+
 	tokenArr := strings.Split(token, ".")
+
+	if len(tokenArr) < 2 {
+		return at, errors.New("invalid token")
+	}
 
 	payload := tokenArr[0]
 
 	signed := tokenArr[1]
 
-	signedVerify := doHMAC(payload, secret, "base64URL")
+	signedVerify, err := doHMAC(payload, secret, "base64URL")
+
+	if err != nil {
+		return at, err
+	}
 
 	if signedVerify != signed {
 		return tokenpb.AccessToken{}, errors.New("invalid token")
@@ -191,7 +214,6 @@ func VerifyAT(token, secret string) (tokenpb.AccessToken, error) {
 	at, errDecode := DecodeAT(payload)
 
 	if errDecode != nil {
-		log.Fatalln("Failed to decode access token - Decode proto:", errDecode)
 		return tokenpb.AccessToken{}, errDecode
 	}
 
@@ -204,13 +226,19 @@ func VerifyAT(token, secret string) (tokenpb.AccessToken, error) {
 
 func VerifyRT(token, secret string) (tokenpb.RefreshToken, error) {
 
+	var rt tokenpb.RefreshToken
+
 	tokenArr := strings.Split(token, ".")
 
 	payload := tokenArr[0]
 
 	signed := tokenArr[1]
 
-	signedVerify := doHMAC(payload, secret, "base64URL")
+	signedVerify, err := doHMAC(payload, secret, "base64URL")
+
+	if err != nil {
+		return rt, err
+	}
 
 	if signedVerify != signed {
 		return tokenpb.RefreshToken{}, errors.New("invalid token")
@@ -219,7 +247,6 @@ func VerifyRT(token, secret string) (tokenpb.RefreshToken, error) {
 	rt, errDecode := DecodeRT(payload)
 
 	if errDecode != nil {
-		log.Fatalln("Failed to decode refresh token - Decode proto:", errDecode)
 		return tokenpb.RefreshToken{}, errDecode
 	}
 
